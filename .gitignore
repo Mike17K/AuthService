@@ -1,0 +1,37 @@
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# Folders
+_obj
+_test
+_bin
+_release
+_vendor
+
+# Compiled Go binary
+tmp
+*.exe
+*.test
+
+# Environment variables file
+.env
+
+# Dependency directories (created by `go mod` or `dep`)
+/vendor/
+/go.sum
+/go.mod
+
+# Output of the go coverage tool
+*.out
+
+# IDE files
+.idea/
+.vscode/
+
+# macOS
+.DS_Store
+
+# Log files
+*.log
