@@ -1,15 +1,62 @@
-version: '3'
+version: '3.8'
 
 services:
+  mysql:
+    image: mysql:8.3.0
+    # container_name: mysql_service_container
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: authservicedb
+      MYSQL_USER: username
+      MYSQL_PASSWORD: password
+    ports:
+      - "3309:3306"
+    volumes:
+      - ./database/mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: always 
+    networks:
+      - backend
+
   auth-service:
     build:
       context: . # Use an image built from the specified Dockerfile in the current directory.
       dockerfile: Dockerfile
+      # container_name: auth_service_container
     ports:
       - "${PORT}:${PORT}" # Use the PORT variable from the .env file
     restart: unless-stopped
+    depends_on:
+      - mysql
+      # - redis
     env_file:
       - .env
     environment:
       - MODE=production
       - PORT=${PORT}
+      - DB_USER=username
+      - DB_PASSWORD=password
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=authservicedb
+    networks:
+      - backend
+
+  # redis:
+  #   image: redis:alpine
+  #   # container_name: redis_service_container
+  #   ports:
+  #     - 6379
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - backend
+  #   restart: unless-stopped
+  
+volumes:
+  redis_data: 
+    driver: local
+
+networks:
+  backend:
+    driver: bridge

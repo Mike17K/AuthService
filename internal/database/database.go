@@ -7,51 +7,59 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+
 	"github.com/joho/godotenv"
 )
 
+// Define a struct representing a database model
+type User struct {
+	ID   uint   `gorm:"primary_key"`
+	Name string `gorm:"type:varchar(100);"`
+	Age  uint
+}
+
 // DB is a global variable to hold the database connection
-var DB *sqlx.DB
+var db *gorm.DB
 
 // InitDB initializes the database connection
-func InitDB() error {
+func InitDB() (*gorm.DB, error) {
 	var err error
 
 	// Load environment variables from .env file
 	if err := godotenv.Load(); err != nil {
-		return fmt.Errorf("failed to load .env file: %v", err)
+		return nil, fmt.Errorf("failed to load .env file: %v", err)
 	}
 
-	// Get database connection string from environment variables
-	dbConnStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
+	db, err = gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"))
+		os.Getenv("DB_NAME")))
 
-	// Connect to the database
-	DB, err = sqlx.Open("mysql", dbConnStr)
 	if err != nil {
-		return fmt.Errorf("failed to connect to the database: %v", err)
+		fmt.Println("Error connecting to database:", err)
+		os.Exit(1)
 	}
+	fmt.Println("Connected to the database")
 
-	// Set maximum idle connections
-	DB.SetMaxIdleConns(10)
+	defer db.Close()
+
+	db.DB().SetMaxIdleConns(10)
 
 	// Set maximum open connections
-	DB.SetMaxOpenConns(100)
+	db.DB().SetMaxOpenConns(100)
 
 	// Set the maximum amount of time a connection may be reused
-	DB.SetConnMaxLifetime(time.Hour)
+	db.DB().SetConnMaxLifetime(time.Hour)
 
-	// Ping the database to check if the connection is successful
-	if err := DB.Ping(); err != nil {
-		return fmt.Errorf("failed to ping the database: %v", err)
+	// AutoMigrate creates tables based on the model structs
+	if !db.HasTable(&User{}) {
+		// AutoMigrate creates tables based on the model structs
+		db.AutoMigrate(&User{})
 	}
 
-	fmt.Println("Connected to the database")
-	return nil
+	return db, nil
 }
