@@ -3,6 +3,7 @@ package main
 import (
 	"auth-service/internal/database"
 	"auth-service/pkg/routes"
+	"auth-service/pkg/utils"
 	"fmt"
 	"net/http"
 	"os"
@@ -21,6 +22,9 @@ func main() {
 		fmt.Println("Failed to load .env file")
 		os.Exit(1)
 	}
+
+	fmt.Println("Access key: ", os.Getenv("SERVICE_SECRET_KEY"))
+	fmt.Println("Access: ", utils.GenerateSecret(os.Getenv("SERVICE_SECRET_KEY")))
 
 	database.InitDB()
 
@@ -50,8 +54,8 @@ func main() {
 		port = "8080" // Default port
 	}
 
-	fmt.Println("Server started on port " + port)
-	err = http.ListenAndServe(":"+port, r)
+	fmt.Println("Serving on https://localhost:" + port)
+	err = http.ListenAndServeTLS(":"+port, os.Getenv("SSL_CERT_PATH"), os.Getenv("SSL_KEY_PATH"), r)
 	if err != nil {
 		fmt.Println("Failed to start server:", err)
 		os.Exit(1)

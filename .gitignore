@@ -37,3 +37,5 @@ tmp
 *.log
 
 database/mysql_data/
+**/*.cert
+**/*.key

@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"auth-service/middleware"
 	"auth-service/pkg/handler"
 	"log"
 	"net/http"
@@ -14,6 +15,13 @@ import (
  */
 func ApplicationRouter() http.Handler {
 	r := chi.NewRouter()
+
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.ApplicationAuthorization)
+
+		r.Post("/register", handler.ApplicationRegisterHandler)
+
+	})
 
 	//r.Group https://artursiarohau.medium.com/go-chi-rate-limiter-useful-examples-8277dc4d4ff5
 

@@ -10,56 +10,98 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 
+	"auth-service/internal/models"
+
 	"github.com/joho/godotenv"
 )
 
-// Define a struct representing a database model
-type User struct {
-	ID   uint   `gorm:"primary_key"`
-	Name string `gorm:"type:varchar(100);"`
-	Age  uint
-}
-
-// DB is a global variable to hold the database connection
-var db *gorm.DB
+// DB is the database connection
+var DB *gorm.DB
 
 // InitDB initializes the database connection
 func InitDB() (*gorm.DB, error) {
-	var err error
-
 	// Load environment variables from .env file
 	if err := godotenv.Load(); err != nil {
 		return nil, fmt.Errorf("failed to load .env file: %v", err)
 	}
 
-	db, err = gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
+	// Establish initial database connection
+	if err := connectToDatabase(); err != nil {
+		return nil, err
+	}
+
+	// Start goroutine for periodic health checks
+	go periodicHealthCheck()
+
+	return DB, nil
+}
+
+// connectToDatabase establishes the initial database connection
+func connectToDatabase() error {
+	var err error
+	DB, err = gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_NAME")))
-
 	if err != nil {
-		fmt.Println("Error connecting to database:", err)
-		os.Exit(1)
+		// call reconnect() here after a delay
+		delay := 2 * time.Second
+
+		go func() {
+			<-time.After(delay) // Wait for the specified duration
+			reconnect()
+		}()
+
+		return fmt.Errorf("error connecting to database: %v", err)
 	}
-	fmt.Println("Connected to the database")
-
-	defer db.Close()
-
-	db.DB().SetMaxIdleConns(10)
 
 	// Set maximum open connections
-	db.DB().SetMaxOpenConns(100)
-
-	// Set the maximum amount of time a connection may be reused
-	db.DB().SetConnMaxLifetime(time.Hour)
+	DB.DB().SetMaxIdleConns(10)
+	DB.DB().SetMaxOpenConns(100)
+	DB.DB().SetConnMaxLifetime(time.Hour)
 
 	// AutoMigrate creates tables based on the model structs
-	if !db.HasTable(&User{}) {
-		// AutoMigrate creates tables based on the model structs
-		db.AutoMigrate(&User{})
+	if !DB.HasTable(&models.User{}) {
+		DB.AutoMigrate(&models.User{})
 	}
 
-	return db, nil
+	if !DB.HasTable(&models.Application{}) {
+		DB.AutoMigrate(&models.Application{})
+	}
+
+	fmt.Println("Connected to the database")
+
+	return nil
+}
+
+// periodicHealthCheck periodically checks the health of the database connection
+func periodicHealthCheck() {
+	ticker := time.NewTicker(1 * time.Hour) // Adjust the interval as needed
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := DB.DB().Ping(); err != nil {
+				fmt.Println("Error checking database connection health:", err)
+				// Attempt to reconnect
+				if err := reconnect(); err != nil {
+					fmt.Printf("Failed to reconnect to database: %v\n", err)
+				}
+			}
+		}
+	}
+}
+
+// reconnect attempts to reconnect to the database
+func reconnect() error {
+	fmt.Println("Attempting to reconnect to the database...")
+	// Close the existing connection
+	if err := DB.Close(); err != nil {
+		return fmt.Errorf("error closing database connection: %v", err)
+	}
+	// Reopen the connection
+	return connectToDatabase()
 }

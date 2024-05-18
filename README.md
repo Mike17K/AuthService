@@ -32,3 +32,8 @@ GRANT ALL PRIVILEGES ON authservicedb.* TO 'username'@'localhost';
 -- Flush privileges to apply changes
 FLUSH PRIVILEGES;
 ```
+# SSL
+on wsl
+```bash
+openssl req -nodes -new -x509 -keyout server.key -out server.cert
+```
