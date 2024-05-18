@@ -20,8 +20,6 @@ tmp
 
 # Dependency directories (created by `go mod` or `dep`)
 /vendor/
-/go.sum
-/go.mod
 
 # Output of the go coverage tool
 *.out
