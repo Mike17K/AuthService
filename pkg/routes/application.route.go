@@ -17,17 +17,11 @@ func ApplicationRouter() http.Handler {
 	r := chi.NewRouter()
 
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.ApplicationAuthorization)
+		r.Use(middleware.ApplicationAuthServiceAuthorization)
 
 		r.Post("/register", handler.ApplicationRegisterHandler)
-
+		r.Post("/login", handler.ApplicationLoginHandler)
 	})
-
-	//r.Group https://artursiarohau.medium.com/go-chi-rate-limiter-useful-examples-8277dc4d4ff5
-
-	// Handle GET method for "/application/hello" route
-	r.With(LoggingMiddleware).Post("/hello", handler.HelloHandler)
-	r.With(LoggingMiddleware).Get("/hello", handler.HelloHandler)
 
 	return r
 }

@@ -9,11 +9,18 @@ const (
 	Facebook
 )
 
+type UserType int
+
+const (
+	Admin UserType = iota
+	SimpleUser
+)
+
 // User represents a user in the system
 type User struct {
-	ID                              uint   `gorm:"primary_key"`
+	ID                              string `gorm:"type:varchar(36);primary_key"`
 	Name                            string `gorm:"type:varchar(100);"`
-	Email                           string `gorm:"type:varchar(100);"`
+	Email                           string `gorm:"type:varchar(100);unique_index;not null;"`
 	EmailVerified                   bool
 	Password                        string `gorm:"type:varchar(100);"`
 	AuthProvider                    Provider
@@ -22,4 +29,7 @@ type User struct {
 	TwoFactorInitialSecret          string `gorm:"type:varchar(100);"`
 	IsBlocked                       bool
 	OpenToChangePasswordWithTokenID string `gorm:"type:varchar(100);"`
+	ApplicationID                   string `gorm:"type:varchar(36);"`
+	UserType                        UserType
+	RefreshToken                    string `gorm:"type:varchar(1000);"`
 }

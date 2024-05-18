@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"math/big"
 	"time"
 
@@ -63,9 +64,12 @@ func VerifySecret(originalSecret, secret string) bool {
 func GenerateJWT(secret string,
 	claims jwt.MapClaims,
 	exp time.Duration,
-) (string, error) {
+) string {
 
 	claims["exp"] = time.Now().Add(exp).Unix()
+
+	log.Println("Time expiring in hours and minutes local time: ", time.Now().Add(exp).Local())
+	log.Println("Time duration in seconds: ", exp.Seconds())
 
 	// Create a new token object
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -73,10 +77,11 @@ func GenerateJWT(secret string,
 	// Sign the token with the secret
 	signedToken, err := token.SignedString([]byte(secret))
 	if err != nil {
-		return "", err
+		fmt.Errorf("Error signing token: ", err)
+		return ""
 	}
 
-	return signedToken, nil
+	return signedToken
 }
 
 func VerifyJWT(secret, token string) (jwt.MapClaims, error) {
