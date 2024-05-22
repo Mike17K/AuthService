@@ -54,8 +54,9 @@ func main() {
 		port = "8080" // Default port
 	}
 
-	fmt.Println("Serving on https://localhost:" + port)
-	err = http.ListenAndServeTLS(":"+port, os.Getenv("SSL_CERT_PATH"), os.Getenv("SSL_KEY_PATH"), r)
+	fmt.Println("Serving on http://localhost:" + port)
+	//err = http.ListenAndServeTLS(":"+port, os.Getenv("SSL_CERT_PATH"), os.Getenv("SSL_KEY_PATH"), r)
+	err = http.ListenAndServe(":"+port, r)
 	if err != nil {
 		fmt.Println("Failed to start server:", err)
 		os.Exit(1)
