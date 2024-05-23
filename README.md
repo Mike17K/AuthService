@@ -143,5 +143,16 @@ sudo usermod -aG docker <username>
 and the logout and login again
 
 Run a database mysql for the service to connect
-```
+```bash
+docker run -d \
+  --name mysql_service_container \
+  -e MYSQL_ROOT_PASSWORD=root_password \
+  -e MYSQL_DATABASE=authservicedb \
+  -e MYSQL_USER=username \
+  -e MYSQL_PASSWORD=password \
+  -p 3309:3306 \
+  -v $(pwd)/database/mysql_data:/var/lib/mysql \
+  -v $(pwd)/database/init.sql:/docker-entrypoint-initdb.d/init.sql \
+  --restart always \
+  mysql:8.3.0
 ```
