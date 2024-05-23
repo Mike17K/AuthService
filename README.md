@@ -85,6 +85,12 @@ returns {
 ```
 
 # Build
+## Docker image
+```bash
+docker run --env-file .env -p 8080:8080 auth-service
+```
+
+## Docker compose
 ```Dockerfile
 sudo docker compose up
 ```

@@ -23,8 +23,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("Access key: ", os.Getenv("SERVICE_SECRET_KEY"))
-	fmt.Println("Access: ", utils.GenerateSecret(os.Getenv("SERVICE_SECRET_KEY")))
+	// Set a secret key for the service if not already set in .env file
+	if os.Getenv("SERVICE_SECRET_KEY") == "" {
+		fmt.Println("SERVICE_SECRET_KEY not set in .env file, setting a random secret key")
+		os.Setenv("SERVICE_SECRET_KEY", utils.GenerateRandomString(32))
+		fmt.Println("New secret key: ", os.Getenv("SERVICE_SECRET_KEY"))
+		os.Exit(1)
+	}
+
+	fmt.Println("Time Generated Access Token: ", utils.GenerateSecret(os.Getenv("SERVICE_SECRET_KEY")))
 
 	database.InitDB()
 

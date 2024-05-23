@@ -23,9 +23,6 @@ WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/auth-service .
-COPY --from=builder /app/.env ./.env
-COPY --from=builder /app/server.cert ./server.cert
-COPY --from=builder /app/server.key ./server.key
 
 # Run the built binary
 CMD ["./auth-service"]
