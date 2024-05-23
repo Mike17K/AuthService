@@ -135,3 +135,13 @@ copying the ssh key to get it to my secrets in the repo for the CICD
 ```bash
 clip < ~/.ssh/....pub
 ```
+Steps to Resolve Docker Permission Issues When CICD is deploying to server over ssh
+Add User to Docker Group on server:
+```
+sudo usermod -aG docker <username>
+```
+and the logout and login again
+
+Run a database mysql for the service to connect
+```
+```

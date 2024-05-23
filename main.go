@@ -20,7 +20,12 @@ func main() {
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Println("Failed to load .env file")
-		os.Exit(1)
+		// os.Exit(1)
+	}
+
+	// print all env variables
+	for _, element := range os.Environ() {
+		fmt.Println(element)
 	}
 
 	// Set a secret key for the service if not already set in .env file

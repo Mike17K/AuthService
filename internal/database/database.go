@@ -11,8 +11,6 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 
 	"auth-service/internal/models"
-
-	"github.com/joho/godotenv"
 )
 
 // DB is the database connection
@@ -21,9 +19,6 @@ var DB *gorm.DB
 // InitDB initializes the database connection
 func InitDB() (*gorm.DB, error) {
 	// Load environment variables from .env file
-	if err := godotenv.Load(); err != nil {
-		return nil, fmt.Errorf("failed to load .env file: %v", err)
-	}
 
 	// Establish initial database connection
 	if err := connectToDatabase(); err != nil {
