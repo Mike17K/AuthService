@@ -129,3 +129,9 @@ on wsl
 ```bash
 openssl req -nodes -new -x509 -keyout server.key -out server.cert
 ```
+
+# Trubleshooting
+copying the ssh key to get it to my secrets in the repo for the CICD
+```bash
+clip < ~/.ssh/....pub
+```

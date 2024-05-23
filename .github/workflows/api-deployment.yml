@@ -40,14 +40,17 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
 
       - name: Deploy to Server
-        run: |
-          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} user@${{ secrets.SSH_HOST }} << EOF
-            docker pull ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
-            docker stop auth-service || true
-            docker rm auth-service || true
-            docker run -d --name auth-service -p 80:80 --env-file /path/to/env/file ${{ secrets.DOCKER_USERNAME }}/myapp:latest
-          EOF
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > ssh_key
+          chmod 600 ssh_key
+          ssh -o StrictHostKeyChecking=no -i ssh_key $SSH_USERNAME@$SSH_HOST << 'EOF'
+            docker pull ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
+            docker stop auth-service || true
+            docker rm auth-service || true
+            docker run -d --name auth-service -p 4444:4444 --env-file ~/AuthService/.env ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
+          EOF
+          rm ssh_key
