@@ -2,7 +2,7 @@ package routes
 
 import (
 	"auth-service/middleware"
-	"auth-service/pkg/handler"
+	"auth-service/pkg/handler/application"
 	"log"
 	"net/http"
 
@@ -19,8 +19,8 @@ func ApplicationRouter() http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.ApplicationAuthServiceAuthorization)
 
-		r.Post("/register", handler.ApplicationRegisterHandler)
-		r.Post("/login", handler.ApplicationLoginHandler)
+		r.Post("/register", application.ApplicationRegisterHandler)
+		r.Post("/login", application.ApplicationLoginHandler)
 	})
 
 	return r
