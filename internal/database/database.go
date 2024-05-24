@@ -1,5 +1,3 @@
-// database.go
-
 package database
 
 import (
@@ -11,15 +9,13 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 
 	"auth-service/internal/models"
+	"auth-service/pkg/constants"
 )
 
-// DB is the database connection
 var DB *gorm.DB
 
 // InitDB initializes the database connection
 func InitDB() (*gorm.DB, error) {
-	// Load environment variables from .env file
-
 	// Establish initial database connection
 	if err := connectToDatabase(); err != nil {
 		return nil, err
@@ -35,11 +31,11 @@ func InitDB() (*gorm.DB, error) {
 func connectToDatabase() error {
 	var err error
 	DB, err = gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME")))
+		os.Getenv(constants.DB_USER),
+		os.Getenv(constants.DB_PASSWORD),
+		os.Getenv(constants.DB_HOST),
+		os.Getenv(constants.DB_PORT),
+		os.Getenv(constants.DB_NAME)))
 	if err != nil {
 		// call reconnect() here after a delay
 		delay := 2 * time.Second

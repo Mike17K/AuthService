@@ -38,9 +38,13 @@ func GenerateSecret(originalSecret string, options ...int64) string {
 	return hex.EncodeToString(secret)
 }
 
-func VerifySecret(originalSecret, secret string) bool {
+func VerifySecret(originalSecret, secret string, options ...int64) bool {
+	var window int64 = 1800 // Default window size (30 minutes)
+	if len(options) > 0 {
+		window = options[0] // Override default window size if provided
+	}
 	// Get the current time 30 minutes window
-	currentTime := time.Now().Unix() / (30 * 60)
+	currentTime := time.Now().Unix() / window
 
 	// Convert the current time to a string
 	timeString := fmt.Sprintf("%d", currentTime)

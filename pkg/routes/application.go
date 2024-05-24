@@ -1,9 +1,8 @@
 package routes
 
 import (
-	"auth-service/middleware"
 	"auth-service/pkg/handler/application"
-	"log"
+	"auth-service/pkg/middleware"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -17,19 +16,11 @@ func ApplicationRouter() http.Handler {
 	r := chi.NewRouter()
 
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.ApplicationAuthServiceAuthorization)
+		r.Use(middleware.ServiceToServicePrivateRouteAuthorization)
 
 		r.Post("/register", application.ApplicationRegisterHandler)
 		r.Post("/login", application.ApplicationLoginHandler)
 	})
 
 	return r
-}
-
-// simple middleware to log incoming requests
-func LoggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("[%s] %s %s", r.Method, r.URL.Path, r.RemoteAddr)
-		next.ServeHTTP(w, r)
-	})
 }

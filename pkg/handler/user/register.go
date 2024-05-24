@@ -3,6 +3,7 @@ package user
 import (
 	"auth-service/internal/database"
 	"auth-service/internal/models"
+	"auth-service/pkg/constants"
 	"auth-service/pkg/utils"
 	"strings"
 	"time"
@@ -21,6 +22,12 @@ type UserRegisterBody struct {
 	Password string `json:"password" validate:"required"`
 }
 
+type UserRegisterResponse struct {
+	Message      string `json:"message"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 func UserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	// Validations - Start
 	var body UserRegisterBody
@@ -34,19 +41,20 @@ func UserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	var application = models.Application{}
-	if err := database.DB.Where("base_secret_key = ?", r.Header.Get("Application-Secret")).First(&application).Error; err != nil {
-		http.Error(w, "Application not found", http.StatusNotFound)
+	application, ok := r.Context().Value(constants.ApplicationContextKey).(models.Application)
+	if !ok {
+		http.Error(w, "Application not found in context", http.StatusInternalServerError)
 		return
 	}
 	r.Body.Close()
 	// Validations - End
 
+	// Create the User object
 	ID := utils.GenerateRandomString()
 	Refreshtoken := utils.GenerateJWT(application.BaseSecretKey, jwt.MapClaims{
-		"user_id":    ID,
-		"user_type":  models.SimpleUser,
-		"token_type": "refresh_token",
+		constants.JWTUserIdField:    ID,
+		constants.JWTUserTypeField:  models.SimpleUser,
+		constants.JWTTokenTypeField: constants.RefreshToken,
 	}, 30*24*60*60*time.Second)
 	var User = models.User{
 		ID:                              ID,
@@ -65,7 +73,7 @@ func UserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 		RefreshToken:                    Refreshtoken,
 	}
 
-	// Create the User record in the database
+	// Save the User object to the database
 	tx := database.DB.Begin() // create a transaction for rollback in case of error
 	if err := tx.Create(&User).Error; err != nil {
 		// Check for duplicate entry error
@@ -80,17 +88,18 @@ func UserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tx.Commit()
-
 	log.Printf("User created: %v", User)
+	// Database save successful
 
-	response := map[string]string{
-		"message": "User created successfully",
-		"access_token": utils.GenerateJWT(application.BaseSecretKey, jwt.MapClaims{
-			"user_id":    User.ID,
-			"user_type":  User.UserType,
-			"token_type": "access_token",
+	// Send the response
+	response := UserRegisterResponse{
+		Message: "User created successfully",
+		AccessToken: utils.GenerateJWT(application.BaseSecretKey, jwt.MapClaims{
+			constants.JWTUserIdField:    User.ID,
+			constants.JWTUserTypeField:  User.UserType,
+			constants.JWTTokenTypeField: constants.AccessToken,
 		}, 30*60*time.Second),
-		"refresh_token": Refreshtoken,
+		RefreshToken: Refreshtoken,
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)

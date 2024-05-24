@@ -1,6 +1,6 @@
 package models
 
-// User represents a user in the system
+// Application represents the application that will be using the auth service
 type Application struct {
 	ID            string `gorm:"type:varchar(36);primary_key"`
 	Name          string `gorm:"type:varchar(100);unique_index;not null;"`

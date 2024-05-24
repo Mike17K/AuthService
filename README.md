@@ -151,8 +151,8 @@ docker run -d \
   -e MYSQL_USER=username \
   -e MYSQL_PASSWORD=password \
   -p 3309:3306 \
-  -v $(pwd)/database/mysql_data:/var/lib/mysql \
-  -v $(pwd)/database/init.sql:/docker-entrypoint-initdb.d/init.sql \
+  -v $(pwd)/AuthService/database/mysql_data:/var/lib/mysql \
+  -v $(pwd)/AuthService/database/init.sql:/docker-entrypoint-initdb.d/init.sql \
   --restart always \
   mysql:8.3.0
 ```

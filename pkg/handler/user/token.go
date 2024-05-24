@@ -3,8 +3,8 @@
 package user
 
 import (
-	"auth-service/internal/database"
 	"auth-service/internal/models"
+	"auth-service/pkg/constants"
 	"auth-service/pkg/utils"
 	"time"
 
@@ -15,38 +15,40 @@ import (
 	"net/http"
 )
 
+type UserTokenResponse struct {
+	Message      string `json:"message"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 func UserGetAccessTokenHandler(w http.ResponseWriter, r *http.Request) {
 	// Validations - Start
-	var application = models.Application{}
-	if err := database.DB.Where("base_secret_key = ?", r.Header.Get("Application-Secret")).First(&application).Error; err != nil {
-		http.Error(w, "Application not found", http.StatusNotFound)
-		return
-	}
-	var token, err = utils.VerifyJWT(application.BaseSecretKey, r.Header.Get("Authorization"))
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-	if token["token_type"] != "refresh_token" {
+	token, ok := r.Context().Value(constants.UserContextKey).(jwt.MapClaims)
+	if !ok || token[constants.JWTTokenTypeField] != constants.RefreshToken {
 		http.Error(w, "Wrong Token Type", http.StatusUnauthorized)
+		return
+	}
+	application, ok := r.Context().Value(constants.ApplicationContextKey).(models.Application)
+	if !ok {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	r.Body.Close()
 	// Validations - End
 
+	// Generate new access token
 	newAccessToken := utils.GenerateJWT(application.BaseSecretKey, jwt.MapClaims{
-		"user_id":    token["user_id"],
-		"user_type":  token["user_type"],
-		"token_type": "access_token",
+		constants.JWTUserIdField:    token[constants.JWTUserIdField],
+		constants.JWTUserTypeField:  token[constants.JWTUserTypeField],
+		constants.JWTTokenTypeField: constants.AccessToken,
 	}, 30*60*time.Second)
-
 	log.Printf("New access token generated for user: %v", token["user_id"])
 
-	response := map[string]string{
-		"message":      "New access token generated successfully",
-		"access_token": newAccessToken,
+	// Generate the Response
+	response := UserTokenResponse{
+		Message:     "New access token generated successfully",
+		AccessToken: newAccessToken,
 	}
-
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }

@@ -5,6 +5,7 @@ package user
 import (
 	"auth-service/internal/database"
 	"auth-service/internal/models"
+	"auth-service/pkg/constants"
 	"auth-service/pkg/utils"
 	"time"
 
@@ -21,6 +22,12 @@ type UserLoginBody struct {
 	Password string `json:"password" validate:"required"`
 }
 
+type UserLoginResponse struct {
+	Message      string `json:"message"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 func UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Validations - Start
 	var body UserLoginBody
@@ -34,28 +41,33 @@ func UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	var application = models.Application{}
-	if err := database.DB.Where("base_secret_key = ?", r.Header.Get("Application-Secret")).First(&application).Error; err != nil {
-		http.Error(w, "Application not found", http.StatusNotFound)
+	// Get data from context
+	application, ok := r.Context().Value(constants.ApplicationContextKey).(models.Application)
+	if !ok {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	r.Body.Close()
 	// Validations - End
 
 	// Create the User record in the database
-	tx := database.DB.Begin() // create a transaction for rollback in case of error
-	var User = models.User{}
+	tx := database.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	var User models.User
 	if err := tx.Where("Email = ? AND Password = ?", body.Email, utils.EncryptPassword(body.Password)).First(&User).Error; err != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		tx.Rollback()
 		return
 	}
-	Refreshtoken := utils.GenerateJWT(application.BaseSecretKey, jwt.MapClaims{
-		"user_id":    User.ID,
-		"user_type":  models.SimpleUser,
-		"token_type": "refresh_token",
+	refreshToken := utils.GenerateJWT(application.BaseSecretKey, jwt.MapClaims{
+		constants.JWTUserIdField:    User.ID,
+		constants.JWTUserTypeField:  models.SimpleUser,
+		constants.JWTTokenTypeField: constants.RefreshToken,
 	}, 30*24*60*60*time.Second)
-	User.RefreshToken = Refreshtoken
+	User.RefreshToken = refreshToken
 	if err := tx.Save(&User).Error; err != nil {
 		log.Printf("Error updating User: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -66,14 +78,16 @@ func UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("User login: %v", User)
 
-	response := map[string]string{
-		"message": "User login successfully",
-		"access_token": utils.GenerateJWT(application.BaseSecretKey, jwt.MapClaims{
-			"user_id":    User.ID,
-			"user_type":  User.UserType,
-			"token_type": "access_token",
-		}, 30*60*time.Second),
-		"refresh_token": User.RefreshToken,
+	accessToken := utils.GenerateJWT(application.BaseSecretKey, jwt.MapClaims{
+		constants.JWTUserIdField:    User.ID,
+		constants.JWTUserTypeField:  User.UserType,
+		constants.JWTTokenTypeField: constants.AccessToken,
+	}, 30*60*time.Second)
+
+	response := UserLoginResponse{
+		Message:      "User login successful",
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)

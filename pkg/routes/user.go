@@ -2,6 +2,7 @@ package routes
 
 import (
 	"auth-service/pkg/handler/user"
+	"auth-service/pkg/middleware"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -10,14 +11,16 @@ import (
 func UserRouter() http.Handler {
 	r := chi.NewRouter()
 
-	// Handle GET method for "/user/hello" route
-	// r.Get("/hello", handler.HelloHandler)
-
 	r.Group(func(r chi.Router) {
+		r.Use(middleware.ValidateRequestApplicationMiddleware)
 		r.Post("/register", user.UserRegisterHandler)
 		r.Post("/login", user.UserLoginHandler)
-		r.Post("/logout", user.UserLogoutHandler)
-		r.Get("/token", user.UserGetAccessTokenHandler)
+
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.VerifyJWTMiddleware)
+			r.Post("/logout", user.UserLogoutHandler)
+			r.Get("/token", user.UserGetAccessTokenHandler)
+		})
 	})
 
 	return r

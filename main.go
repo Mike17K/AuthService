@@ -2,6 +2,7 @@ package main
 
 import (
 	"auth-service/internal/database"
+	"auth-service/pkg/constants"
 	"auth-service/pkg/routes"
 	"auth-service/pkg/utils"
 	"fmt"
@@ -29,14 +30,14 @@ func main() {
 	}
 
 	// Set a secret key for the service if not already set in .env file
-	if os.Getenv("SERVICE_SECRET_KEY") == "" {
-		fmt.Println("SERVICE_SECRET_KEY not set in .env file, setting a random secret key")
-		os.Setenv("SERVICE_SECRET_KEY", utils.GenerateRandomString(32))
-		fmt.Println("New secret key: ", os.Getenv("SERVICE_SECRET_KEY"))
+	if os.Getenv(constants.SERVICE_SECRET) == "" {
+		fmt.Println(constants.SERVICE_SECRET, "not set in .env file, setting a random secret key")
+		os.Setenv(constants.SERVICE_SECRET, utils.GenerateRandomString(32))
+		fmt.Println("New secret key: ", os.Getenv(constants.SERVICE_SECRET))
 		os.Exit(1)
 	}
 
-	fmt.Println("Time Generated Access Token: ", utils.GenerateSecret(os.Getenv("SERVICE_SECRET_KEY")))
+	fmt.Println("Time Generated Access Token: ", utils.GenerateSecret(os.Getenv(constants.SERVICE_SECRET)))
 
 	database.InitDB()
 
@@ -61,7 +62,7 @@ func main() {
 	r.Mount("/user", routes.UserRouter())
 
 	// Start the server on port from .env file
-	port := os.Getenv("PORT")
+	port := os.Getenv(constants.PORT)
 	if port == "" {
 		port = "8080" // Default port
 	}
