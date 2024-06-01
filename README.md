@@ -86,8 +86,15 @@ returns {
 
 # Build
 ## Docker image
+docker network create backend-network
+
 ```bash
-docker run --env-file .env -p 8080:8080 auth-service
+docker run --network backend-network --env-file .env -p 4444:4444 auth-service
+```
+
+## Run Mysql Container
+```bash
+docker run --network backend-network --name custom-mysql -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=authservicedb -p "3333:3306" -d mysql:8.3.0
 ```
 
 ## Docker compose

@@ -30,12 +30,14 @@ func InitDB() (*gorm.DB, error) {
 // connectToDatabase establishes the initial database connection
 func connectToDatabase() error {
 	var err error
-	DB, err = gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		os.Getenv(constants.DB_USER),
 		os.Getenv(constants.DB_PASSWORD),
 		os.Getenv(constants.DB_HOST),
 		os.Getenv(constants.DB_PORT),
-		os.Getenv(constants.DB_NAME)))
+		os.Getenv(constants.DB_NAME))
+	fmt.Println(dsn)
+	DB, err = gorm.Open("mysql", dsn)
 	if err != nil {
 		// call reconnect() here after a delay
 		delay := 2 * time.Second
