@@ -1,11 +1,12 @@
 package middleware
 
 import (
+	"auth-service/api/constants"
+	"auth-service/api/utils"
 	"auth-service/internal/database"
 	"auth-service/internal/models"
-	"auth-service/pkg/constants"
-	"auth-service/pkg/utils"
 	"context"
+	"log"
 	"net/http"
 	"os"
 
@@ -23,7 +24,7 @@ func ServiceToServicePrivateRouteAuthorization(next http.Handler) http.Handler {
 
 		// Load the secret key from the environment variable
 		expectedSecretKey := utils.GenerateSecret(os.Getenv(constants.SERVICE_SECRET))
-		fmt.Println("Expecting: ", expectedSecretKey)
+		log.Println("Expected secret key: ", expectedSecretKey)
 		if expectedSecretKey == "" {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return

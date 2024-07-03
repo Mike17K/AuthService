@@ -1,14 +1,16 @@
 package main
 
 import (
+	"auth-service/api/constants"
+	"auth-service/api/routes"
+	"auth-service/api/utils"
 	"auth-service/internal/database"
-	"auth-service/pkg/constants"
-	"auth-service/pkg/routes"
-	"auth-service/pkg/utils"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/rs/cors"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -16,6 +18,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// @title Auth Service API
+// @version 1.0
+// @description This is the API for the Auth Service
+// @BasePath /
+// @host      localhost:4444
 func main() {
 	// Load environment variables from .env file
 	err := godotenv.Load()
@@ -56,6 +63,14 @@ func main() {
 	r.Use(middleware.SetHeader("X-XSS-Protection", "1; mode=block"))
 	// r.Use(middleware.SetHeader("Strict-Transport-Security", "max-age=5184000; includeSubDomains")) // Uncomment this line if you are using HTTPS
 	r.Use(httprate.LimitByRealIP(100, time.Minute))
+	r.Use(cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "*"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}).Handler)
 
 	// Register your handlers
 	r.Mount("/application", routes.ApplicationRouter())

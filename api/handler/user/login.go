@@ -3,10 +3,10 @@
 package user
 
 import (
+	"auth-service/api/constants"
+	"auth-service/api/utils"
 	"auth-service/internal/database"
 	"auth-service/internal/models"
-	"auth-service/pkg/constants"
-	"auth-service/pkg/utils"
 	"time"
 
 	"github.com/go-playground/validator/v10"

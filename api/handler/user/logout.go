@@ -3,9 +3,9 @@
 package user
 
 import (
+	"auth-service/api/constants"
 	"auth-service/internal/database"
 	"auth-service/internal/models"
-	"auth-service/pkg/constants"
 	"encoding/json"
 	"log"
 	"net/http"

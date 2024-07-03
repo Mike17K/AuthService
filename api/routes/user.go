@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"auth-service/pkg/handler/user"
-	"auth-service/pkg/middleware"
+	"auth-service/api/handler/user"
+	"auth-service/api/middleware"
 	"net/http"
 
 	"github.com/go-chi/chi"

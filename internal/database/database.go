@@ -8,8 +8,8 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 
+	"auth-service/api/constants"
 	"auth-service/internal/models"
-	"auth-service/pkg/constants"
 )
 
 var DB *gorm.DB

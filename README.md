@@ -1,6 +1,13 @@
 # Auth Api Service
 This is a server that manages the users of applications.
 
+
+### Swagger Docs
+[here documentation](https://github.com/swaggo/swag#declarative-comments-format)
+```bash
+swag init && go run ./cmd/swagger_ui.go
+```
+
 ## routes 
 
 ### Application Routes
@@ -97,6 +104,11 @@ docker run --network backend-network --env-file .env -p 4444:4444 auth-service
 docker run --network backend-network --name custom-mysql -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=authservicedb -p "3333:3306" -d mysql:8.3.0
 ```
 
+or without nework if u dont work with other containers
+```bash
+docker run --name auth-service-mysql -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=authservicedb -p "3333:3306" -d mysql:8.3.0
+```
+
 ## Docker compose
 ```Dockerfile
 sudo docker compose up
@@ -163,3 +175,4 @@ docker run -d \
   --restart always \
   mysql:8.3.0
 ```
+containers cant connect ( example dockerized mysql , dockerized go server ) solution put them on the same network

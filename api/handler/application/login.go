@@ -1,9 +1,9 @@
 package application
 
 import (
+	"auth-service/api/utils"
 	"auth-service/internal/database"
 	"auth-service/internal/models"
-	"auth-service/pkg/utils"
 
 	"github.com/go-playground/validator/v10"
 
@@ -17,6 +17,24 @@ type ApplicationLoginBody struct {
 	Password string `json:"password" validate:"required"`
 }
 
+type ApplicationLoginResponse struct {
+	BaseSecretKey string `json:"base_secret"`
+}
+
+// ApplicationLogin godoc
+// @Summary      Login an application
+// @Description  Login an application
+// @Tags         Application
+// @Accept       json
+// @Produce      json
+// @Param        Auth-Service-Authorization header string true "Authorization key"
+// @Param        application body ApplicationLoginBody true "Application login body"
+// @Success      200  {object}  utils.SuccessResponse[ApplicationLoginResponse]
+// @Failure      400  {object}  utils.ErrorResponse
+// @Failure      401  {object}  utils.ErrorResponse
+// @Failure      404  {object}  utils.ErrorResponse
+// @Failure      500  {object}  utils.ErrorResponse
+// @Router       /application/login [post]
 func ApplicationLoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Validations - Start
 	var body ApplicationLoginBody
@@ -37,12 +55,12 @@ func ApplicationLoginHandler(w http.ResponseWriter, r *http.Request) {
 	tx := database.DB.Begin()
 	var application models.Application
 	if err := tx.Where("name = ?", body.Name).First(&application).Error; err != nil {
-		http.Error(w, "Application not found", http.StatusNotFound)
+		utils.SendResponse(w, utils.Error("Application not found", nil), http.StatusNotFound)
 		tx.Rollback()
 		return
 	}
 	if application.Password != utils.EncryptPassword(body.Password) {
-		http.Error(w, "Invalid password", http.StatusUnauthorized)
+		utils.SendResponse(w, utils.Error("Invalid password", nil), http.StatusUnauthorized)
 		tx.Rollback()
 		return
 	}
@@ -50,10 +68,8 @@ func ApplicationLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Application login: %v", application)
 
-	response := map[string]string{
-		"message":         "Application login successfully",
-		"base_secret_key": application.BaseSecretKey,
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	// Send the response
+	utils.SendResponse(w, utils.Success("Application login successfully", ApplicationLoginResponse{
+		BaseSecretKey: application.BaseSecretKey,
+	}), http.StatusOK)
 }

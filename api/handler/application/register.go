@@ -1,9 +1,9 @@
 package application
 
 import (
+	"auth-service/api/utils"
 	"auth-service/internal/database"
 	"auth-service/internal/models"
-	"auth-service/pkg/utils"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -19,17 +19,35 @@ type ApplicationRegisterBody struct {
 	Description string `json:"description" validate:"required"`
 }
 
+type ApplicationRegisterResponse struct {
+	BaseSecretKey string `json:"base_secret"`
+}
+
+// ApplicationRegister godoc
+// @Summary      Register an application
+// @Description  Register an application
+// @Tags         Application
+// @Accept       json
+// @Produce      json
+// @Param        Auth-Service-Authorization header string true "Authorization key"
+// @Param        application body ApplicationRegisterBody true "Application register body"
+// @Success      200  {object}  utils.SuccessResponse[ApplicationRegisterResponse]
+// @Failure      400  {object}  utils.ErrorResponse
+// @Failure      401  {object}  utils.ErrorResponse
+// @Failure      404  {object}  utils.ErrorResponse
+// @Failure      500  {object}  utils.ErrorResponse
+// @Router       /application/register [post]
 func ApplicationRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	// Validations - Start
 	var body ApplicationRegisterBody
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&body); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.SendResponse(w, utils.Error(err.Error(), nil), http.StatusBadRequest)
 		return
 	}
 	validate := validator.New()
 	if err := validate.Struct(body); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.SendResponse(w, utils.Error(err.Error(), nil), http.StatusBadRequest)
 		return
 	}
 	r.Body.Close()
@@ -49,11 +67,11 @@ func ApplicationRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if err := tx.Create(&application).Error; err != nil {
 		// Check for duplicate entry error
 		if strings.Contains(err.Error(), "Duplicate entry") {
-			http.Error(w, "Application with the same name already exists", http.StatusConflict)
+			utils.SendResponse(w, utils.Error("Application with the same name already exists", nil), http.StatusConflict)
 		} else {
 			// Log other types of errors
 			log.Printf("Error creating application: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			utils.SendResponse(w, utils.Error("Internal server error", nil), http.StatusInternalServerError)
 		}
 		tx.Rollback()
 		return
@@ -62,10 +80,5 @@ func ApplicationRegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Application created: %v", application)
 
-	response := map[string]string{
-		"message":         "Application created successfully",
-		"base_secret_key": application.BaseSecretKey,
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	utils.SendResponse(w, utils.Success("Application created", ApplicationRegisterResponse{BaseSecretKey: application.BaseSecretKey}), http.StatusOK)
 }
