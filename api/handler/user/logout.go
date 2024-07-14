@@ -10,6 +10,8 @@ import (
 	"log"
 	"net/http"
 
+	_ "auth-service/api/utils"
+
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -17,6 +19,20 @@ type UserLogoutResponse struct {
 	Message string `json:"message"`
 }
 
+// UserLogout godoc
+// @Summary      Logout an user
+// @Description  Logout an user
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        Application-Secret header string true "Application base secret key"
+// @Param        Authorization header string true "Bearer access token"
+// @Success      200  {object}  utils.SuccessResponse[UserLogoutResponse]
+// @Failure      400  {object}  utils.ErrorResponse
+// @Failure      401  {object}  utils.ErrorResponse
+// @Failure      404  {object}  utils.ErrorResponse
+// @Failure      500  {object}  utils.ErrorResponse
+// @Router       /user/logout [post]
 func UserLogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// Validations - Start
 	// Get data from context

@@ -21,6 +21,20 @@ type UserTokenResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+// UserToken godoc
+// @Summary      Get a new access token
+// @Description  Get a new access token using the refresh token
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        Application-Secret header string true "Application base secret key"
+// @Param        Authorization header string true "Bearer refresh token"
+// @Success      200  {object}  utils.SuccessResponse[UserTokenResponse]
+// @Failure      400  {object}  utils.ErrorResponse
+// @Failure      401  {object}  utils.ErrorResponse
+// @Failure      404  {object}  utils.ErrorResponse
+// @Failure      500  {object}  utils.ErrorResponse
+// @Router       /user/token [get]
 func UserGetAccessTokenHandler(w http.ResponseWriter, r *http.Request) {
 	// Validations - Start
 	token, ok := r.Context().Value(constants.UserContextKey).(jwt.MapClaims)

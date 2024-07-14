@@ -33,6 +33,61 @@ definitions:
       base_secret:
         type: string
     type: object
+  user.UserLoginBody:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  user.UserLoginResponse:
+    properties:
+      access_token:
+        type: string
+      message:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  user.UserLogoutResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  user.UserRegisterBody:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  user.UserRegisterResponse:
+    properties:
+      access_token:
+        type: string
+      message:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  user.UserTokenResponse:
+    properties:
+      access_token:
+        type: string
+      message:
+        type: string
+      refresh_token:
+        type: string
+    type: object
   utils.ErrorResponse:
     properties:
       error:
@@ -55,6 +110,42 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/application.ApplicationRegisterResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  utils.SuccessResponse-user_UserLoginResponse:
+    properties:
+      data:
+        $ref: '#/definitions/user.UserLoginResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  utils.SuccessResponse-user_UserLogoutResponse:
+    properties:
+      data:
+        $ref: '#/definitions/user.UserLogoutResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  utils.SuccessResponse-user_UserRegisterResponse:
+    properties:
+      data:
+        $ref: '#/definitions/user.UserRegisterResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  utils.SuccessResponse-user_UserTokenResponse:
+    properties:
+      data:
+        $ref: '#/definitions/user.UserTokenResponse'
       message:
         type: string
       success:
@@ -153,4 +244,174 @@ paths:
       summary: Register an application
       tags:
       - Application
+  /user/login:
+    post:
+      consumes:
+      - application/json
+      description: Login an user
+      parameters:
+      - description: Application base secret key
+        in: header
+        name: Application-Secret
+        required: true
+        type: string
+      - description: User login details
+        in: body
+        name: application
+        required: true
+        schema:
+          $ref: '#/definitions/user.UserLoginBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.SuccessResponse-user_UserLoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Login an user
+      tags:
+      - User
+  /user/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logout an user
+      parameters:
+      - description: Application base secret key
+        in: header
+        name: Application-Secret
+        required: true
+        type: string
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.SuccessResponse-user_UserLogoutResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Logout an user
+      tags:
+      - User
+  /user/register:
+    post:
+      consumes:
+      - application/json
+      description: Register an user
+      parameters:
+      - description: Application base secret key
+        in: header
+        name: Application-Secret
+        required: true
+        type: string
+      - description: User login details
+        in: body
+        name: application
+        required: true
+        schema:
+          $ref: '#/definitions/user.UserRegisterBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.SuccessResponse-user_UserRegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Register an user
+      tags:
+      - User
+  /user/token:
+    get:
+      consumes:
+      - application/json
+      description: Get a new access token using the refresh token
+      parameters:
+      - description: Application base secret key
+        in: header
+        name: Application-Secret
+        required: true
+        type: string
+      - description: Bearer refresh token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.SuccessResponse-user_UserTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Get a new access token
+      tags:
+      - User
 swagger: "2.0"

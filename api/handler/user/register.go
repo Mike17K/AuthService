@@ -28,6 +28,20 @@ type UserRegisterResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+// UserRegister godoc
+// @Summary      Register an user
+// @Description  Register an user
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        Application-Secret header string true "Application base secret key"
+// @Param        application body UserRegisterBody true "User login details"
+// @Success      200  {object}  utils.SuccessResponse[UserRegisterResponse]
+// @Failure      400  {object}  utils.ErrorResponse
+// @Failure      401  {object}  utils.ErrorResponse
+// @Failure      404  {object}  utils.ErrorResponse
+// @Failure      500  {object}  utils.ErrorResponse
+// @Router       /user/register [post]
 func UserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	// Validations - Start
 	var body UserRegisterBody
