@@ -1,6 +1,10 @@
 # Auth Api Service
 This is a server that manages the users of applications.
 
+# Swagger
+```bash
+swag init && go run cmd/swagger_ui.go
+```
 
 # Build
 
