@@ -2,10 +2,131 @@
 This is a server that manages the users of applications.
 
 
-### Swagger Docs
-[here documentation](https://github.com/swaggo/swag#declarative-comments-format)
+# Build
+
+## Docker Network 
+```bash 
+sudo docker network create backend-network
+```
+
+## Create Mysql docker volumes
 ```bash
-swag init && go run ./cmd/swagger_ui.go
+docker volume create custom-mysql-volume
+```
+
+## Run Mysql Container
+```bash
+sudo docker run -d \
+  --network backend-network \
+  --name custom-mysql \
+  -e MYSQL_ROOT_PASSWORD=root_password \
+  -e MYSQL_DATABASE=authservicedb \
+  -e MYSQL_USER=username \
+  -e MYSQL_PASSWORD=password \
+  -p 3333:3306 \
+  -v mysql_data_volume:/var/lib/mysql \
+  -v $(pwd)/AuthService/database/init.sql:/docker-entrypoint-initdb.d/init.sql \
+  --restart always \
+  mysql:8.3.0
+```
+
+### Setup Enviroment Variables
+In the .env file
+
+```bash
+cp example.env .env && sudo nano .env
+```
+
+```
+SERVICE_SECRET_KEY=<random numbers and chars>
+PORT=<the port you want the auth service to run>
+
+# Database
+DB_USER=root
+DB_PASSWORD=root_password
+DB_HOST=custom-mysql
+DB_PORT=3306
+DB_NAME=authservicedb
+```
+
+## Docker image
+```bash
+docker build -t auth-service .
+```
+
+```bash
+docker run -d \
+  --network backend-network \
+  --env-file .env \
+  --name custom-auth-service \
+  -p 4444:4444 \
+  --restart always \
+  auth-service
+```
+
+
+## Docker compose
+```Dockerfile
+sudo docker compose up
+```
+
+# Localy
+Install dependencies
+```bash
+go mod tidy
+```
+
+run with air and .env
+```bash
+export $(egrep -v ‘^#’ .env | xargs) && air
+```
+
+# Database setup
+???
+```sql
+create database authservicedb;
+use authservicedb;
+
+CREATE USER 'username'@'localhost' IDENTIFIED BY 'password';
+
+-- Grant privileges to the new user for a specific database
+GRANT ALL PRIVILEGES ON authservicedb.* TO 'username'@'localhost';
+
+
+-- Flush privileges to apply changes
+FLUSH PRIVILEGES;
+```
+# SSL
+on wsl
+```bash
+openssl req -nodes -new -x509 -keyout server.key -out server.cert
+```
+
+# Trubleshooting
+copying the ssh key to get it to my secrets in the repo for the CICD
+```bash
+clip < ~/.ssh/....pub
+```
+Steps to Resolve Docker Permission Issues When CICD is deploying to server over ssh
+Add User to Docker Group on server:
+```
+sudo usermod -aG docker <username>
+```
+and the logout and login again
+
+Run a database mysql for the service to connect
+```bash
+docker run -d \
+  --name mysql_service_container \
+  -e MYSQL_ROOT_PASSWORD=root_password \
+  -e MYSQL_DATABASE=authservicedb \
+  -e MYSQL_USER=username \
+  -e MYSQL_PASSWORD=password \
+  -p 3309:3306 \
+  -v $(pwd)/AuthService/database/mysql_data:/var/lib/mysql \
+  -v $(pwd)/AuthService/database/init.sql:/docker-entrypoint-initdb.d/init.sql \
+  --restart always \
+  mysql:8.3.0
 ```
 
 ## routes 
@@ -90,89 +211,5 @@ returns {
     "message": "New access token generated successfully"
 }
 ```
-
-# Build
-## Docker image
-docker network create backend-network
-
-```bash
-docker run --network backend-network --env-file .env -p 4444:4444 auth-service
-```
-
-## Run Mysql Container
-```bash
-docker run --network backend-network --name custom-mysql -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=authservicedb -p "3333:3306" -d mysql:8.3.0
-```
-
-or without nework if u dont work with other containers
-```bash
-docker run --name auth-service-mysql -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=authservicedb -p "3333:3306" -d mysql:8.3.0
-```
-
-## Docker compose
-```Dockerfile
-sudo docker compose up
-```
-
-# Localy
-Install dependencies
-```bash
-go mod tidy
-```
-
-run with air and .env
-```bash
-export $(egrep -v ‘^#’ .env | xargs) && air
-```
-
 # Intresting Topics
 Rate limiter more specific examples : https://artursiarohau.medium.com/go-chi-rate-limiter-useful-examples-8277dc4d4ff5
-
-# Database setup
-???
-```sql
-create database authservicedb;
-use authservicedb;
-
-CREATE USER 'username'@'localhost' IDENTIFIED BY 'password';
-
--- Grant privileges to the new user for a specific database
-GRANT ALL PRIVILEGES ON authservicedb.* TO 'username'@'localhost';
-
-
--- Flush privileges to apply changes
-FLUSH PRIVILEGES;
-```
-# SSL
-on wsl
-```bash
-openssl req -nodes -new -x509 -keyout server.key -out server.cert
-```
-
-# Trubleshooting
-copying the ssh key to get it to my secrets in the repo for the CICD
-```bash
-clip < ~/.ssh/....pub
-```
-Steps to Resolve Docker Permission Issues When CICD is deploying to server over ssh
-Add User to Docker Group on server:
-```
-sudo usermod -aG docker <username>
-```
-and the logout and login again
-
-Run a database mysql for the service to connect
-```bash
-docker run -d \
-  --name mysql_service_container \
-  -e MYSQL_ROOT_PASSWORD=root_password \
-  -e MYSQL_DATABASE=authservicedb \
-  -e MYSQL_USER=username \
-  -e MYSQL_PASSWORD=password \
-  -p 3309:3306 \
-  -v $(pwd)/AuthService/database/mysql_data:/var/lib/mysql \
-  -v $(pwd)/AuthService/database/init.sql:/docker-entrypoint-initdb.d/init.sql \
-  --restart always \
-  mysql:8.3.0
-```
-containers cant connect ( example dockerized mysql , dockerized go server ) solution put them on the same network
